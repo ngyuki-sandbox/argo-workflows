@@ -1,0 +1,75 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: hello-world
+  labels:
+    workflows.argoproj.io/archive-strategy: "false"
+  annotations:
+    workflows.argoproj.io/description: |
+      説明文ですか？
+spec:
+  entrypoint: hello-world
+  serviceAccountName: hello-world
+  arguments:
+    parameters:
+      - name: message
+        value: hello world
+  templates:
+    - name: hello-world
+      inputs:
+        parameters:
+          - name: message
+      container:
+        image: busybox
+        command:
+          - echo
+        args:
+          - '{{inputs.parameters.message}}'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hello-world
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hello-world
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hello-world
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hello-world
+subjects:
+  - kind: ServiceAccount
+    namespace: defualt
+    name: hello-world
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hello-world
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hello-world
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: hello-world
+subjects:
+  - kind: ServiceAccount
+    name: hello-world
